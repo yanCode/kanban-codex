@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { useKanbanTasks } from "@/hooks/use-kanban";
 import { kanbanColumns } from "@/lib/default-data";
-import { generateId, formatDate } from "@/lib/utils";
+import { cn, generateId, formatDate } from "@/lib/utils";
 import { KanbanTask } from "@/lib/types";
 
 const priorities: KanbanTask["priority"][] = ["low", "medium", "high"];
@@ -20,6 +20,8 @@ export default function KanbanPage() {
   const [priority, setPriority] = useState<KanbanTask["priority"]>("medium");
   const [dueDate, setDueDate] = useState("");
   const [targetColumn, setTargetColumn] = useState(kanbanColumns[1].id);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [hoveredColumn, setHoveredColumn] = useState<string | null>(null);
 
   const grouped = useMemo(() => {
     const map = new Map<string, KanbanTask[]>();
@@ -43,19 +45,37 @@ export default function KanbanPage() {
       priority,
       dueDate: dueDate || undefined,
     };
-    setTasks([newTask, ...tasks]);
+    setTasks((prev) => [newTask, ...prev]);
     setTitle("");
     setDescription("");
     setDueDate("");
     setPriority("medium");
   };
 
-  const updateTask = (id: string, updates: Partial<KanbanTask>) => {
-    setTasks(tasks.map((task) => (task.id === id ? { ...task, ...updates } : task)));
+  const moveTask = (id: string, status: string) => {
+    setTasks((prev) => {
+      const task = prev.find((item) => item.id === id);
+      if (!task) return prev;
+
+      const updatedTask = { ...task, status };
+      const targetTasks: KanbanTask[] = [];
+      const remaining: KanbanTask[] = [];
+
+      prev.forEach((item) => {
+        if (item.id === id) return;
+        if (item.status === status) {
+          targetTasks.push(item);
+        } else {
+          remaining.push(item);
+        }
+      });
+
+      return [updatedTask, ...targetTasks, ...remaining];
+    });
   };
 
   const removeTask = (id: string) => {
-    setTasks(tasks.filter((task) => task.id !== id));
+    setTasks((prev) => prev.filter((task) => task.id !== id));
   };
 
   return (
@@ -128,10 +148,27 @@ export default function KanbanPage() {
       <div className="soft-scrollbar flex gap-4 overflow-x-auto pb-3 pt-2">
         {kanbanColumns.map((column) => {
           const items = grouped.get(column.id) ?? [];
+          const isActiveColumn = hoveredColumn === column.id && draggingId;
           return (
             <div
               key={column.id}
-              className="flex w-72 flex-shrink-0 flex-col rounded-3xl border border-slate-100 bg-white/80 p-4 shadow-subtle backdrop-blur dark:border-slate-800 dark:bg-slate-900/70"
+              onDragOver={(event) => {
+                event.preventDefault();
+                setHoveredColumn(column.id);
+              }}
+              onDragLeave={() => setHoveredColumn(null)}
+              onDrop={() => {
+                if (draggingId) moveTask(draggingId, column.id);
+                setHoveredColumn(null);
+                setDraggingId(null);
+              }}
+              className={cn(
+                "flex w-72 flex-shrink-0 flex-col rounded-3xl border p-4 shadow-subtle backdrop-blur transition",
+                "border-slate-100 bg-white/80 dark:border-slate-800 dark:bg-slate-900/70",
+                isActiveColumn
+                  ? "border-brand-200 bg-white/70 shadow-xl ring-1 ring-brand-200/60 backdrop-blur-md dark:border-brand-300/40"
+                  : ""
+              )}
             >
               <div className="flex items-center justify-between">
                 <div>
@@ -150,7 +187,19 @@ export default function KanbanPage() {
                 {items.map((task) => (
                   <article
                     key={task.id}
-                    className="rounded-2xl border border-transparent bg-white p-4 shadow-card transition hover:-translate-y-0.5 hover:shadow-lg dark:border-slate-800 dark:bg-slate-900"
+                    draggable
+                    onDragStart={() => setDraggingId(task.id)}
+                    onDragEnd={() => {
+                      setDraggingId(null);
+                      setHoveredColumn(null);
+                    }}
+                    className={cn(
+                      "rounded-2xl border border-transparent bg-white p-4 shadow-card transition duration-300",
+                      "hover:-translate-y-0.5 hover:shadow-lg dark:border-slate-800 dark:bg-slate-900",
+                      draggingId === task.id
+                        ? "-rotate-2 scale-[1.02] shadow-2xl ring-2 ring-brand-200/80 backdrop-blur-sm"
+                        : ""
+                    )}
                   >
                     <div className="flex items-start justify-between">
                       <div>
@@ -179,19 +228,9 @@ export default function KanbanPage() {
                         <Badge tone="default">Due {formatDate(task.dueDate)}</Badge>
                       )}
                     </div>
-                    <select
-                      value={task.status}
-                      onChange={(event) =>
-                        updateTask(task.id, { status: event.target.value })
-                      }
-                      className="mt-4 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs uppercase tracking-[0.2em] text-slate-500 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100 dark:border-slate-700 dark:bg-slate-950/50"
-                    >
-                      {kanbanColumns.map((option) => (
-                        <option value={option.id} key={option.id}>
-                          Move to {option.title}
-                        </option>
-                      ))}
-                    </select>
+                    <div className="mt-4 text-xs uppercase tracking-[0.2em] text-slate-400">
+                      Drag to move
+                    </div>
                   </article>
                 ))}
                 {items.length === 0 && (
