@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { useTheme } from "@/components/theme-provider";
+import { Button } from "@/components/ui/button";
 
 const navItems = [
   { href: "/", label: "Dashboard", emoji: "🏁" },
@@ -14,24 +16,39 @@ const navItems = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { theme, toggleTheme } = useTheme();
 
   return (
     <aside className="sticky top-0 hidden h-screen w-64 flex-shrink-0 border-r border-slate-100 bg-white/90 px-6 py-10 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-900/50 lg:flex">
       <div className="flex w-full flex-col justify-between gap-6">
         <div className="space-y-8">
           <div>
-            <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-900 text-white dark:bg-white dark:text-slate-900">
-                ✦
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-900 text-white dark:bg-white dark:text-slate-900">
+                  ✦
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-[0.3em] text-slate-400">
+                    Flow Suite
+                  </p>
+                  <p className="text-base font-semibold text-slate-900 dark:text-white">
+                    Productivity
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-slate-400">
-                  Flow Suite
-                </p>
-                <p className="text-base font-semibold text-slate-900 dark:text-white">
-                  Productivity
-                </p>
-              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                type="button"
+                onClick={toggleTheme}
+                aria-label="Toggle color theme"
+                className="shrink-0"
+              >
+                <span className="text-lg" aria-hidden="true">
+                  {theme === "dark" ? "🌙" : "☀️"}
+                </span>
+              </Button>
             </div>
           </div>
 

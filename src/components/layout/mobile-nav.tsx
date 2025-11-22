@@ -2,6 +2,8 @@
 
 import { useRouter, usePathname } from "next/navigation";
 import { ChangeEvent } from "react";
+import { useTheme } from "@/components/theme-provider";
+import { Button } from "@/components/ui/button";
 
 const routes = [
   { value: "/", label: "Dashboard" },
@@ -14,6 +16,7 @@ const routes = [
 export function MobileNav() {
   const router = useRouter();
   const pathname = usePathname();
+  const { theme, toggleTheme } = useTheme();
 
   const handleSelect = (event: ChangeEvent<HTMLSelectElement>) => {
     router.push(event.target.value);
@@ -21,9 +24,22 @@ export function MobileNav() {
 
   return (
     <div className="lg:hidden">
-      <label className="text-xs uppercase tracking-[0.3em] text-slate-400">
-        Navigate
-      </label>
+      <div className="flex items-center justify-between">
+        <label className="text-xs uppercase tracking-[0.3em] text-slate-400">
+          Navigate
+        </label>
+        <Button
+          variant="ghost"
+          size="sm"
+          type="button"
+          onClick={toggleTheme}
+          aria-label="Toggle color theme"
+        >
+          <span className="text-lg" aria-hidden="true">
+            {theme === "dark" ? "🌙" : "☀️"}
+          </span>
+        </Button>
+      </div>
       <select
         value={
           routes.find((route) => pathname.startsWith(route.value))?.value || "/"
