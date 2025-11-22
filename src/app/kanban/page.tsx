@@ -19,9 +19,13 @@ export default function KanbanPage() {
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<KanbanTask["priority"]>("medium");
   const [dueDate, setDueDate] = useState("");
-  const [targetColumn, setTargetColumn] = useState(kanbanColumns[1].id);
+  const [targetColumn, setTargetColumn] = useState<KanbanTask["status"]>(
+    kanbanColumns[1].id,
+  );
   const [draggingId, setDraggingId] = useState<string | null>(null);
-  const [hoveredColumn, setHoveredColumn] = useState<string | null>(null);
+  const [hoveredColumn, setHoveredColumn] = useState<KanbanTask["status"] | null>(
+    null,
+  );
 
   const grouped = useMemo(() => {
     const map = new Map<string, KanbanTask[]>();
@@ -52,10 +56,12 @@ export default function KanbanPage() {
     setPriority("medium");
   };
 
-  const moveTask = (id: string, status: string) => {
+  const moveTask = (id: string, status: KanbanTask["status"]) => {
     setTasks((prev) => {
       const task = prev.find((item) => item.id === id);
       if (!task) return prev;
+
+      if (task.status === status) return prev;
 
       const updatedTask = { ...task, status };
       const targetTasks: KanbanTask[] = [];
@@ -148,7 +154,7 @@ export default function KanbanPage() {
       <div className="soft-scrollbar flex gap-4 overflow-x-auto pb-3 pt-2">
         {kanbanColumns.map((column) => {
           const items = grouped.get(column.id) ?? [];
-          const isActiveColumn = hoveredColumn === column.id && draggingId;
+          const isActiveColumn = !!draggingId && hoveredColumn === column.id;
           return (
             <div
               key={column.id}
@@ -158,16 +164,15 @@ export default function KanbanPage() {
               }}
               onDragLeave={() => setHoveredColumn(null)}
               onDrop={() => {
-                if (draggingId) moveTask(draggingId, column.id);
+                if (draggingId) moveTask(draggingId, column.id as KanbanTask["status"]);
                 setHoveredColumn(null);
                 setDraggingId(null);
               }}
               className={cn(
                 "flex w-72 flex-shrink-0 flex-col rounded-3xl border p-4 shadow-subtle backdrop-blur transition",
                 "border-slate-100 bg-white/80 dark:border-slate-800 dark:bg-slate-900/70",
-                isActiveColumn
-                  ? "border-brand-200 bg-white/70 shadow-xl ring-1 ring-brand-200/60 backdrop-blur-md dark:border-brand-300/40"
-                  : ""
+                isActiveColumn &&
+                  "border-brand-200 bg-white/70 shadow-xl ring-1 ring-brand-200/60 backdrop-blur-md dark:border-brand-300/40",
               )}
             >
               <div className="flex items-center justify-between">
@@ -193,12 +198,11 @@ export default function KanbanPage() {
                       setDraggingId(null);
                       setHoveredColumn(null);
                     }}
-                    className={cn(
+              className={cn(
                       "rounded-2xl border border-transparent bg-white p-4 shadow-card transition duration-300",
                       "hover:-translate-y-0.5 hover:shadow-lg dark:border-slate-800 dark:bg-slate-900",
-                      draggingId === task.id
-                        ? "-rotate-2 scale-[1.02] shadow-2xl ring-2 ring-brand-200/80 backdrop-blur-sm"
-                        : ""
+                      draggingId === task.id &&
+                        "-rotate-2 scale-[1.02] shadow-2xl ring-2 ring-brand-200/80 backdrop-blur-sm",
                     )}
                   >
                     <div className="flex items-start justify-between">
