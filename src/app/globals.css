@@ -1,0 +1,44 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #f5f6fb;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --muted: #6b7280;
+  --border: #e5e7eb;
+}
+
+body {
+  min-height: 100vh;
+  font-family: var(--font-geist-sans), "Inter", system-ui, -apple-system,
+    BlinkMacSystemFont, sans-serif;
+  background-color: var(--background);
+  color: var(--foreground);
+}
+
+.card {
+  @apply rounded-2xl border border-slate-100 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900;
+}
+
+.muted {
+  @apply text-sm text-slate-500 dark:text-slate-400;
+}
+
+.page-grid {
+  @apply grid gap-6 lg:grid-cols-3;
+}
+
+.soft-scrollbar::-webkit-scrollbar {
+  height: 8px;
+}
+
+.soft-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.soft-scrollbar::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background-color: rgba(100, 116, 139, 0.35);
+}
